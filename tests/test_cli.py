@@ -27,7 +27,7 @@ def test_performs_conditional_get(mocker):
         assert {"https://example.com/file.png": "hello-etag"} == json.load(
             open("etags.json")
         )
-        # Second call should eract differently
+        # Second call should react differently
         m.get.reset_mock()
         m.get.return_value.status_code = 304
         result = runner.invoke(
