@@ -23,7 +23,7 @@ setup(
     license="Apache License, Version 2.0",
     packages=find_packages(),
     install_requires=["httpx", "click"],
-    extras_require={"test": ["pytest"]},
+    extras_require={"test": ["pytest", "pytest-mock"]},
     tests_require=["conditional-get[test]"],
     entry_points="""
         [console_scripts]

@@ -12,11 +12,11 @@ CLI tool for fetching data using HTTP conditional get.
 
 ## Usage
 
-    conditional-get https://example-url
+    conditional-get https://static.simonwillison.net/static/2020/Simon_Willison__TIL.png
 
 This will save to a filename derived from the URL.
 
-    conditional-get https://example-url -o myfile.txt
+    conditional-get https://static.simonwillison.net/static/2020/Simon_Willison__TIL.png -o til.png
 
 Use `-o` to specify a filename.
 
