@@ -1,5 +1,6 @@
 from conditional_get import cli
 from click.testing import CliRunner
+import pytest
 import json
 
 
@@ -35,3 +36,23 @@ def test_performs_conditional_get(mocker):
         m.get.assert_called_once_with(
             "https://example.com/file.png", headers={"If-None-Match": "hello-etag"}
         )
+
+
+@pytest.mark.parametrize(
+    "url,content_type,filename",
+    [
+        ("https://example.com/file.png", "image/png", "file.png"),
+        ("https://example.com/", "text/html", "index.html"),
+        ("https://example.com/", "text/plain", "index.txt"),
+    ],
+)
+def test_default_filename(mocker, url, content_type, filename):
+    m = mocker.patch.object(cli, "httpx")
+    m.get.return_value = mocker.Mock()
+    m.get.return_value.status_code = 200
+    m.get.return_value.content = b"Hello"
+    m.get.return_value.headers = {"etag": "hello-etag", "content-type": content_type}
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(cli.cli, [url])
+        assert b"Hello" == open(filename, "rb").read()

@@ -2,6 +2,12 @@ import click
 import httpx
 import json
 import time
+from urllib.parse import urlparse
+
+CONTENT_TYPE_TO_EXT = {
+    "text/html": "html",
+    "text/plain": "txt",
+}
 
 
 @click.command()
@@ -28,6 +34,16 @@ def cli(url, output, etags, verbose):
     response = httpx.get(url, headers=headers)
     if verbose:
         click.echo("Response status code: {}".format(response.status_code), err=True)
+    if not output:
+        # Detect output from URL and content_type
+        bits = urlparse(url)
+        output = bits.path.split("/")[-1]
+        if not output:
+            # Use index.filetype
+            content_type = response.headers["content-type"].split()[0]
+            ext = CONTENT_TYPE_TO_EXT.get(content_type, content_type.split("/")[-1])
+            output = "index.{}".format(ext)
+
     if 304 == response.status_code:
         return
     elif 200 == response.status_code:
