@@ -31,24 +31,33 @@ def cli(url, output, etags, verbose):
         headers["If-None-Match"] = existing_etags[url]
         if verbose:
             click.echo("Existing ETag: {}".format(existing_etags[url]), err=True)
-    response = httpx.get(url, headers=headers)
-    if verbose:
-        click.echo("Response status code: {}".format(response.status_code), err=True)
-    if not output:
-        # Detect output from URL and content_type
-        bits = urlparse(url)
-        output = bits.path.split("/")[-1]
+    with httpx.stream("GET", url, headers=headers) as response:
+        if verbose:
+            click.echo(
+                "Response status code: {}".format(response.status_code), err=True
+            )
         if not output:
-            # Use index.filetype
-            content_type = response.headers["content-type"].split()[0]
-            ext = CONTENT_TYPE_TO_EXT.get(content_type, content_type.split("/")[-1])
-            output = "index.{}".format(ext)
+            # Detect output from URL and content_type
+            bits = urlparse(url)
+            output = bits.path.split("/")[-1]
+            if not output:
+                # Use index.filetype
+                content_type = response.headers["content-type"].split()[0]
+                ext = CONTENT_TYPE_TO_EXT.get(content_type, content_type.split("/")[-1])
+                output = "index.{}".format(ext)
 
-    if 304 == response.status_code:
-        return
-    elif 200 == response.status_code:
-        etag = response.headers.get("etag")
-        if etag:
-            existing_etags[url] = etag
-        open(etags, "w").write(json.dumps(existing_etags, indent=4))
-        open(output, "wb").write(response.content)
+        if 304 == response.status_code:
+            return
+        elif 200 == response.status_code:
+            etag = response.headers.get("etag")
+            if etag:
+                existing_etags[url] = etag
+            bar = None
+            if verbose and response.headers.get("content-length"):
+                bar = click.progressbar(length=int(response.headers["content-length"]))
+            with open(output, "wb") as fp:
+                for b in response.iter_bytes():
+                    fp.write(b)
+                    if bar:
+                        bar.update(len(b))
+            open(etags, "w").write(json.dumps(existing_etags, indent=4))

@@ -12,29 +12,35 @@ def test_help():
 
 def test_performs_conditional_get(mocker):
     m = mocker.patch.object(cli, "httpx")
-    m.get.return_value = mocker.Mock()
-    m.get.return_value.status_code = 200
-    m.get.return_value.content = b"Hello PNG"
-    m.get.return_value.headers = {"etag": "hello-etag"}
+    m.stream.return_value.__enter__.return_value = mocker.Mock()
+    m.stream.return_value.__enter__.return_value.status_code = 200
+    m.stream.return_value.__enter__.return_value.iter_bytes.return_value = [
+        b"Hello PNG"
+    ]
+    m.stream.return_value.__enter__.return_value.headers = {"etag": "hello-etag"}
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(
             cli.cli, ["https://example.com/file.png", "-o", "file.png"]
         )
-        m.get.assert_called_once_with("https://example.com/file.png", headers={})
+        m.stream.assert_called_once_with(
+            "GET", "https://example.com/file.png", headers={}
+        )
         assert b"Hello PNG" == open("file.png", "rb").read()
         # Should have also written the ETags file
         assert {"https://example.com/file.png": "hello-etag"} == json.load(
             open("etags.json")
         )
         # Second call should react differently
-        m.get.reset_mock()
-        m.get.return_value.status_code = 304
+        m.stream.reset_mock()
+        m.stream.return_value.status_code = 304
         result = runner.invoke(
             cli.cli, ["https://example.com/file.png", "-o", "file.png"]
         )
-        m.get.assert_called_once_with(
-            "https://example.com/file.png", headers={"If-None-Match": "hello-etag"}
+        m.stream.assert_called_once_with(
+            "GET",
+            "https://example.com/file.png",
+            headers={"If-None-Match": "hello-etag"},
         )
 
 
@@ -48,10 +54,13 @@ def test_performs_conditional_get(mocker):
 )
 def test_default_filename(mocker, url, content_type, filename):
     m = mocker.patch.object(cli, "httpx")
-    m.get.return_value = mocker.Mock()
-    m.get.return_value.status_code = 200
-    m.get.return_value.content = b"Hello"
-    m.get.return_value.headers = {"etag": "hello-etag", "content-type": content_type}
+    m.stream.return_value.__enter__.return_value = mocker.Mock()
+    m.stream.return_value.__enter__.return_value.status_code = 200
+    m.stream.return_value.__enter__.return_value.iter_bytes.return_value = [b"Hello"]
+    m.stream.return_value.__enter__.return_value.headers = {
+        "etag": "hello-etag",
+        "content-type": content_type,
+    }
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(cli.cli, [url])

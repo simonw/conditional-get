@@ -33,6 +33,7 @@ Use the `-v` option to get debug output showing what is happening:
 
     $ conditional-get https://static.simonwillison.net/static/2020/Simon_Willison__TIL.png -v
     Response status code: 200
+    [####################################]  100%
 
     $ ls
     Simon_Willison__TIL.png	etags.json
