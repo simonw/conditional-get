@@ -17,20 +17,22 @@ CONTENT_TYPE_TO_EXT = {
 @click.option(
     "--etags", help="File to store ETags, defaults to etags.json", default="etags.json"
 )
+@click.option("--key", help="Key to lookup ETag in etags.json - defaults to the URL")
 @click.option("-v", "--verbose", help="Verbose output", is_flag=True)
-def cli(url, output, etags, verbose):
+def cli(url, output, etags, key, verbose):
     """
     Fetch data using HTTP conditional get
     """
     headers = {}
+    key = key or url
     try:
         existing_etags = json.load(open(etags))
     except IOError:
         existing_etags = {}
-    if url in existing_etags:
-        headers["If-None-Match"] = existing_etags[url]
+    if key in existing_etags:
+        headers["If-None-Match"] = existing_etags[key]
         if verbose:
-            click.echo("Existing ETag: {}".format(existing_etags[url]), err=True)
+            click.echo("Existing ETag: {}".format(existing_etags[key]), err=True)
     with httpx.stream("GET", url, headers=headers) as response:
         if verbose:
             click.echo(
@@ -51,7 +53,7 @@ def cli(url, output, etags, verbose):
         elif 200 == response.status_code:
             etag = response.headers.get("etag")
             if etag:
-                existing_etags[url] = etag
+                existing_etags[key] = etag
             bar = None
             if verbose and response.headers.get("content-length"):
                 bar = click.progressbar(length=int(response.headers["content-length"]))

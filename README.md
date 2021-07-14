@@ -47,3 +47,13 @@ Use the `-v` option to get debug output showing what is happening:
     $ conditional-get https://static.simonwillison.net/static/2020/Simon_Willison__TIL.png -v
     Existing ETag: "d65b78782dfa93213c99099e0e2181d8"
     Response status code: 304
+
+The key used to store the ETag in `etags.json` defaults to the URL. You can specify a custom key using the `--key` option:
+
+    conditional-get --key til https://static.simonwillison.net/static/2020/Simon_Willison__TIL.png
+    cat etags.json
+    {
+        "til": "\"d65b78782dfa93213c99099e0e2181d8\""
+    }
+
+This is useful if the URL to the file changes even though the file contents stays the same - for example if you are downloading files from URLs that include an expiring signature.

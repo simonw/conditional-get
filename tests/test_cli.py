@@ -10,7 +10,8 @@ def test_help():
     assert "Fetch data using HTTP conditional get" in result.output.strip()
 
 
-def test_performs_conditional_get(mocker):
+@pytest.mark.parametrize("key", (None, "CustomKey"))
+def test_performs_conditional_get(mocker, key):
     m = mocker.patch.object(cli, "httpx")
     m.stream.return_value.__enter__.return_value = mocker.Mock()
     m.stream.return_value.__enter__.return_value.status_code = 200
@@ -20,23 +21,22 @@ def test_performs_conditional_get(mocker):
     m.stream.return_value.__enter__.return_value.headers = {"etag": "hello-etag"}
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = runner.invoke(
-            cli.cli, ["https://example.com/file.png", "-o", "file.png"]
-        )
+        args = ["https://example.com/file.png", "-o", "file.png"]
+        if key is not None:
+            args += ["--key", key]
+        result = runner.invoke(cli.cli, args)
         m.stream.assert_called_once_with(
             "GET", "https://example.com/file.png", headers={}
         )
         assert b"Hello PNG" == open("file.png", "rb").read()
         # Should have also written the ETags file
-        assert {"https://example.com/file.png": "hello-etag"} == json.load(
-            open("etags.json")
-        )
+        expected_key = key or "https://example.com/file.png"
+        assert {expected_key: "hello-etag"} == json.load(open("etags.json"))
         # Second call should react differently
         m.stream.reset_mock()
         m.stream.return_value.status_code = 304
-        result = runner.invoke(
-            cli.cli, ["https://example.com/file.png", "-o", "file.png"]
-        )
+        result = runner.invoke(cli.cli, args)
+        assert result.exit_code == 0
         m.stream.assert_called_once_with(
             "GET",
             "https://example.com/file.png",
@@ -64,4 +64,5 @@ def test_default_filename(mocker, url, content_type, filename):
     runner = CliRunner()
     with runner.isolated_filesystem():
         result = runner.invoke(cli.cli, [url])
+        assert result.exit_code == 0
         assert b"Hello" == open(filename, "rb").read()
