@@ -1,8 +1,9 @@
 # conditional-get
 
-[![PyPI](https://img.shields.io/pypi/v/conditional-get.svg)](https://pypi.python.org/pypi/conditional-get)
-[![CircleCI](https://circleci.com/gh/simonw/conditional-get.svg?style=svg)](https://circleci.com/gh/simonw/conditional-get)
-[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/simonw/conditional-get/blob/master/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/conditional-get.svg)](https://pypi.org/project/conditional-get/)
+[![Changelog](https://img.shields.io/github/v/release/simonw/conditional-get?include_prereleases&label=changelog)](https://github.com/simonw/conditional-get/releases)
+[![Tests](https://github.com/simonw/conditional-get/workflows/Test/badge.svg)](https://github.com/simonw/conditional-get/actions?query=workflow%3ATest)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/dogsheep/conditional-get/blob/main/LICENSE)
 
 CLI tool for fetching data using [HTTP conditional get](https://developer.mozilla.org/en-US/docs/Web/HTTP/Conditional_requests).
 
